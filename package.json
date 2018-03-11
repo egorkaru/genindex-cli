@@ -1,0 +1,25 @@
+{
+  "name": "genindex-cli",
+  "version": "0.0.1",
+  "description": "Beautiful directory listing for static file sharing",
+  "main": "index.js",
+  "bin": {
+    "genindex": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Egor Rudinsky <egor@egor.win>",
+  "license": "CC-BY-4.0",
+  "directories": {
+    "example": "example"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egorkaru/genindex-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/egorkaru/genindex-cli/issues"
+  },
+  "homepage": "https://github.com/egorkaru/genindex-cli#readme"
+}
