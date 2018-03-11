@@ -7,6 +7,20 @@ const minify = (css) =>
     .replace(/ {/g, '{')
     .replace(/: /g, ':')
 
+const humanize = {
+  size (sizeinbytes) {
+    const sufix = 'KMGTP'
+    const i = Math.floor(Math.log(sizeinbytes) / Math.log(1024))
+    return `${Math.round(sizeinbytes/Math.pow(1024, i)*100)/100}${['', ...sufix][i]}b`
+  },
+  date (timestr) {
+    const updated = new Date(timestr)
+    const chain = ['getDate', 'getMonth', 'getFullYear', 'getHours', 'getMinutes'].map(fun => updated[fun]())
+    const [dd, mm, yyyy, hours, minutes] = chain.map((int, ind) => ind == 1 ? (++int).toString() : int.toString()).map(str => str.padStart(2, 0))
+    return `${dd}/${mm}/${yyyy} ${hours}:${minutes}`
+  }
+}
+
 const header = (directory_name, {title, desc}) => 
   [title, desc, `Index of ${directory_name}:`]
       .filter(v => !!v)
@@ -14,34 +28,34 @@ const header = (directory_name, {title, desc}) =>
       .join(EOL)
 
 const row = (item) => {
-  const {name, size, mtime, isDir, isFile, url, description} = item
+  const {name, size, mtime, isFile, url, description} = item
   const link = `<a href="${url}">${name}</a>`
-  const humanizeSize = (size) => {
-    const sufix = ' KMGTP'
-    const i = Math.floor(Math.log(size) / Math.log(1024))
-    return `${Math.round(size/Math.pow(1024, i)*100)/100} ${sufix.charAt(i)}b`
-  }
-  const humanizeDate = (time) => {
-    const updated = new Date(time)
-    const chain = ['getDate', 'getMonth', 'getFullYear', 'getHours', 'getMinutes'].map(fun => updated[fun]())
-    let [dd, mm, yyyy, hours, minutes] = chain.map((int, ind) => ind == 1 ? (++int).toString() : int.toString()).map(str => str.padStart(2, 0))
-    return `${dd}/${mm}/${yyyy} ${hours}:${minutes}`
-  }
   const stats = isFile ?
-    `${humanizeSize(size)}, ${humanizeDate(mtime)}` :
-    `${humanizeDate(mtime)}`
+    `${humanize.size(size)}, ${humanize.date(mtime)}` :
+    `${humanize.date(mtime)}`
   return description ?
   `  <li>${link} — <span class='description'>${description}</span> <span class='stats'>${stats}</span></li>` :
   `  <li>${link} <span class='stats'>${stats}</span></li>`
 }
 
-const listing = (list) =>
-  list
-    .map(item => row(item))
-    .join(EOL)
+const listing = (list) => 
+`<ul>
+${
+  list.map(item => row(item)).join(EOL)
+}
+</ul>`
 
-const index = (css) => (directory_name, meta, list) => 
-(`<!doctype html>
+const links = (directory_name, {links}) => 
+`<h3>Addition links for ${directory_name}:</h3>
+<ul>
+${
+  links.map(({href, title}) => `  <li><a href="${href}">${title}</a></li>`).join(EOL)
+}
+</ul>`
+
+
+const html = (css) => (directory_name, meta, list) => 
+`<!doctype html>
 <head>
   <meta charset="utf-8">
   <title>${meta.title ? meta.title : directory_name}</title>
@@ -52,13 +66,15 @@ const index = (css) => (directory_name, meta, list) =>
 ${
   header(directory_name, meta)
 }
-<ul>
 ${
   listing(list)
 }
-</ul>`)
+${
+  meta.links ? links(directory_name, meta) : ''
+}`
 
 module.exports = {
   minify,
-  index
+  humanize,
+  html
 }

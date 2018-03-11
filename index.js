@@ -154,7 +154,7 @@ const main = async () => {
   const links = makeListing(startURL, files, descriptions)
 
   const style = await loadCSS('style.css')
-  const html = template.index(template.minify(style))(directory_name, meta, links)
+  const html = template.html(template.minify(style))(directory_name, meta, links)
 
   const indexPath = path.join(realPath, 'index.html')
   await writeFile(indexPath, html)
