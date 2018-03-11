@@ -32,7 +32,7 @@ You can also save your *url* to a ```.URL``` file so you don’t have to type it
 
 ### .description.json file
 
-Better watch the [example](https://github.com/egorkaru/genindex-cli/example/.description.json)
+Better watch the [example](https://github.com/egorkaru/genindex-cli/blob/master/example/.description.json)
 
 And then 
 
