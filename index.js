@@ -28,7 +28,7 @@ const error = (err) => {
 const absolutePath = (directory) => 
   path.isAbsolute(directory) ?
     directory :
-    path.join(__dirname, directory)
+    path.join(path.resolve(`.${path.sep}`), directory)
 
 const listFiles = async (directory) => {
   const list = await readdir(directory)

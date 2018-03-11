@@ -1,6 +1,6 @@
 {
   "name": "genindex-cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Beautiful directory listing for static file sharing",
   "main": "index.js",
   "bin": {
