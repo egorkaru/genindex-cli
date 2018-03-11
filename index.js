@@ -11,6 +11,7 @@ const readdir = promisify(fs.readdir)
 const exists = promisify(fs.exists)
 const readFile = promisify(fs.readFile)
 const writeFile = promisify(fs.writeFile)
+const stat = promisify(fs.stat)
 
 const arguments = (names, argv) => {
   const args = argv.slice(2)
@@ -22,8 +23,8 @@ const arguments = (names, argv) => {
 
 const error = (err) => {
   console.error(err)
-    process.exit(2) 
-  }
+  process.exit(2) 
+}
 
 const absolutePath = (directory) => 
   path.isAbsolute(directory) ?
@@ -31,11 +32,28 @@ const absolutePath = (directory) =>
     path.join(path.resolve(`.${path.sep}`), directory)
 
 const listFiles = async (directory) => {
-  const list = await readdir(directory)
+  const dirListing = await readdir(directory)
     .catch(error)
-  return list
-    .filter(file => !file.startsWith('.'))
+  const hidden = dirListing.filter(file => !file.startsWith('.'))
     .filter(file => file != 'index.html')
+  const withStats = await Promise.all(
+    hidden.map(async (filename) => { 
+      const fileStat = await stat(path.join(directory, filename))
+        .catch(error)
+      return {
+        name: filename,
+        size: fileStat.size,
+        mtime: fileStat.mtime,
+        isDir: fileStat.isDirectory(), 
+        isFile: fileStat.isFile()
+      }
+    })
+  )
+  return [
+      ...withStats.filter(i => i.isDir)
+        .map(i => ({...i, name: `${i.name}${path.sep}`})),
+      ...withStats.filter(i => i.isFile)
+    ]
 }
 
 const URLize = (startURL, filename) => 
@@ -81,11 +99,16 @@ const getDescriptions = async (dir) => {
     [{}, {}]
 }
 
-const makeLinks = (files, startURL, descriptions) => 
-  files.map(filename => descriptions[filename] ? 
-      ({ url: URLize(startURL, filename), name: filename, description: descriptions[filename]}) :
-      ({ url: URLize(startURL, filename), name: filename})
-    )
+const makeListing = (startURL, files, descriptions) =>
+  files.map(item => 
+    descriptions[item.name] ? 
+      ({ ...item, url: URLize(startURL, item.name), description: descriptions[item.name]}) :
+      ({ ...item, url: URLize(startURL, item.name)}))
+
+const loadCSS = async (stylename) => 
+  await readFile(path.join(__dirname, stylename))
+    .then(data => data.toString())
+    .catch(err => Promise.resolve(``))
 
 const help = () => {
   console.log(`
@@ -128,8 +151,10 @@ const main = async () => {
     args.startURL
 
   const [meta, descriptions] = await getDescriptions(realPath)
-  const links = makeLinks(files, startURL, descriptions)
-  const html = template.index(directory_name, meta, links)
+  const links = makeListing(startURL, files, descriptions)
+
+  const style = await loadCSS('style.css')
+  const html = template.index(template.minify(style))(directory_name, meta, links)
 
   const indexPath = path.join(realPath, 'index.html')
   await writeFile(indexPath, html)
